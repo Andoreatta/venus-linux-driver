@@ -54,6 +54,12 @@ else
   cp -av ./99-Nitgen-VenusDrv.rules /etc/udev/rules.d
 fi
 
+if [ -f ./shared-object/VenusLib.so ]; then
+  mv ./shared-object/VenusLib.so /lib/
+else
+  echo "File VenusLib.so does not exist in the current directory"
+fi
+
 /sbin/insmod $DRIVER_PATH/VenusDrv.ko
 
 /sbin/depmod

@@ -6,6 +6,7 @@ DEVICE="nitgen"
 echo "Uninstalling driver......."
 
 rm -f /dev/${DEVICE}[0-7]
+rm /lib/VenusLib.so
 /sbin/rmmod VenusDrv.ko
 
 [ -f $DRIVER_PATH/VenusDrv.ko ] && rm -f $DRIVER_PATH/VenusDrv.ko
