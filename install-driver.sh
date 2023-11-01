@@ -55,7 +55,7 @@ else
 fi
 
 if [ -f ./shared-object/VenusLib.so ]; then
-  mv ./shared-object/VenusLib.so /lib/
+  cp ./shared-object/VenusLib.so /lib/
 else
   echo "File VenusLib.so does not exist in the current directory"
 fi
