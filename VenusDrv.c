@@ -442,8 +442,11 @@ static void hfdu04_isocomplete(struct urb *purb, struct pt_regs *regs)
    if (purb->status != -ENOENT ) 
    {
       pipe = usb_rcvisocpipe(purb->dev, dev->iso_in_endpointAddr);
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5,19,0)
+      pipesize = usb_maxpacket(purb->dev, pipe);
+#else
       pipesize = usb_maxpacket(purb->dev, pipe, usb_pipeout(pipe));
-      
+#endif
       for (i = 0; i < purb->number_of_packets; i++) 
       {
          if (!purb->iso_frame_desc[i].status) 
@@ -505,7 +508,13 @@ static int hfdu04_allocbuffers(struct hfdu04_data *dev)
       int i;
       
       pipe 	 = usb_rcvisocpipe(dev->udev, dev->iso_in_endpointAddr);
+      
+#if LINUX_VERSION_CODE > KERNEL_VERSION(5,19,0)
+      pipesize = usb_maxpacket(dev->udev, pipe);
+#else
       pipesize = usb_maxpacket(dev->udev, pipe, usb_pipeout(pipe));
+#endif
+      
       packets	 = _ISOPIPESIZE / pipesize;
       
       transfer_buffer_length 	= packets * pipesize;
@@ -709,7 +718,7 @@ static ssize_t hfdu04_read(struct file *file, char *buf, size_t count, loff_t * 
       while (remain_count > 0) 
       {
          bulk_size = min_t(uint, remain_count, bulk_read_size/*dev->maxbulktransfersize*/);
-         // ¹úÅ©¹æ½ÄÀ» ÀÌ¿ëÇÏ¿© µ¥ÀÌÅÍ¸¦ ÀÐ´Â´Ù.
+         // ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ð´Â´ï¿½.
          bulk_ret = usb_bulk_msg (dev->udev,
                                  usb_rcvbulkpipe(dev->udev, dev->bulk_in_endpointAddr),
                                  dev->bulk_in_buffer,
@@ -719,7 +728,7 @@ static ssize_t hfdu04_read(struct file *file, char *buf, size_t count, loff_t * 
 
          remain_count = remain_count - actual_length;
 
-         // ÀÐÀº µ¥ÀÌÅÍ¸¦ copy_to_user ÇÔ¼ö¸¦ ÀÌ¿ëÇÏ¿© ¾îÇÃ¸®ÄÉÀÌ¼ÇÀ¸·Î ³Ñ±ä´Ù.
+         // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ copy_to_user ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ±ï¿½ï¿½.
          user_result = copy_to_user(u_buf, dev->bulk_in_buffer, actual_length);
          u_buf += actual_length;
          
@@ -739,7 +748,7 @@ static ssize_t hfdu04_read(struct file *file, char *buf, size_t count, loff_t * 
       while (remain_count > 0) 
       {
          bulk_size = min_t(uint, remain_count, dev->maxbulktransfersize);
-         // ¹úÅ©¹æ½ÄÀ» ÀÌ¿ëÇÏ¿© µ¥ÀÌÅÍ¸¦ ÀÐ´Â´Ù.
+         // ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½Ð´Â´ï¿½.
          bulk_ret = usb_bulk_msg (dev->udev,
                                  usb_rcvbulkpipe(dev->udev, dev->bulk_in_endpointAddr),
                                  dev->bulk_in_buffer,
@@ -750,7 +759,7 @@ static ssize_t hfdu04_read(struct file *file, char *buf, size_t count, loff_t * 
          remain_count = remain_count - actual_length;
          //printk("%s : %d remain_count - %ld, actual_length - %d\n", __FUNCTION__, __LINE__, remain_count, actual_length);
          
-         // ÀÐÀº µ¥ÀÌÅÍ¸¦ copy_to_user ÇÔ¼ö¸¦ ÀÌ¿ëÇÏ¿© ¾îÇÃ¸®ÄÉÀÌ¼ÇÀ¸·Î ³Ñ±ä´Ù.
+         // ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ copy_to_user ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ±ï¿½ï¿½.
          user_result = copy_to_user(u_buf, dev->bulk_in_buffer, actual_length);
          u_buf += actual_length;
          
@@ -770,11 +779,11 @@ static ssize_t hfdu04_read(struct file *file, char *buf, size_t count, loff_t * 
       
       while (count > 0) 
       {
-         // 01 ¹öÀü¿¡¼­ »ç¿ëÇÏ´ø ISO ¹æ½ÄÀ» ÀÌ¿ëÇÑ µ¥ÀÌÅÍ Àü¼Û ¹æ½Ä.
-         // ISO ¹æ½ÄÀÇ °æ¿ì hfdu04_startgrabbingdata ÇÔ¼ö¿¡ ÀÖ´Â hfdu04_allocbuffers¸¦ ÀÌ¿ëÇÏ¿©, URB ÃÊ±âÈ­ ÇÏ°í,
-         // ÃÊ±âÈ­ÇÑ URB¸¦ usb_submit_urb ÇÔ¼ö¸¦ ÀÌ¿ëÇÏ¿© URB¸¦ USB ÄÚ¾î´ÜÀ¸·Î ³Ñ°ÜÁÖ°Ô µÈ´Ù.
-         // usb_submit_urb °¡ Á¤»óÀûÀ¸·Î ³¡³ª°Ô µÇ¸é, URB¸¦ ÃÊ±âÈ­ ÇÒ¶§ µî·ÏÇÑ callback ÇÔ¼ö ( hfdu04_isocomplete )¸¦ È£ÃâÇÏ°Ô µÈ´Ù.
-         // ÀÌ hfdu04_isocomplete ÇÔ¼ö¿¡¼­ µ¥ÀÌÅÍ¸¦ copy_to_user ÇÔ¼ö¸¦ ÀÌ¿ëÇÏ¿© ¾îÇÃ¸®ÄÉÀÌ¼ÇÀ¸·Î ³Ñ±ä´Ù.
+         // 01 ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½Ï´ï¿½ ISO ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½.
+         // ISO ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ hfdu04_startgrabbingdata ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ö´ï¿½ hfdu04_allocbuffersï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½, URB ï¿½Ê±ï¿½È­ ï¿½Ï°ï¿½,
+         // ï¿½Ê±ï¿½È­ï¿½ï¿½ URBï¿½ï¿½ usb_submit_urb ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ URBï¿½ï¿½ USB ï¿½Ú¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ°ï¿½ï¿½Ö°ï¿½ ï¿½È´ï¿½.
+         // usb_submit_urb ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ç¸ï¿½, URBï¿½ï¿½ ï¿½Ê±ï¿½È­ ï¿½Ò¶ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ callback ï¿½Ô¼ï¿½ ( hfdu04_isocomplete )ï¿½ï¿½ È£ï¿½ï¿½ï¿½Ï°ï¿½ ï¿½È´ï¿½.
+         // ï¿½ï¿½ hfdu04_isocomplete ï¿½Ô¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ copy_to_user ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½Ã¸ï¿½ï¿½ï¿½ï¿½Ì¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ñ±ï¿½ï¿½.
          
          hfdu04_startgrabbingdata(dev);
          
@@ -950,10 +959,10 @@ static ssize_t hfdu04_write(struct file *file, const char *buf, size_t count, lo
          bulk_size = min_t(uint, remain_count, dev->bulk_out_size);
          
          //printk("%s : %d - bulk_out_endpoint %d, bulk_size %d\n", __FUNCTION__, __LINE__, dev->bulk_out_endpointAddr, bulk_size);
-         // ¾µ µ¥ÀÌÅÍ¸¦ copy_from_user ÇÔ¼ö¸¦ ÀÌ¿ëÇÏ¿© kernel buffer·Î ¿Å±ä´Ù.
+         // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ copy_from_user ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ kernel bufferï¿½ï¿½ ï¿½Å±ï¿½ï¿½.
          user_result = copy_from_user(dev->bulk_out_buffer, buf+bulk_write_total, bulk_size);
 
-         // ¹úÅ©¹æ½ÄÀ» ÀÌ¿ëÇÏ¿© µ¥ÀÌÅÍ¸¦ ¾´´Ù.
+         // ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½.
          bulk_ret = usb_bulk_msg (dev->udev,
                                  usb_sndbulkpipe(dev->udev, dev->bulk_out_endpointAddr),
                                  dev->bulk_out_buffer,
@@ -992,10 +1001,10 @@ static ssize_t hfdu04_write(struct file *file, const char *buf, size_t count, lo
       {
          bulk_size = min_t(uint, remain_count, dev->maxbulktransfersize);
          
-         // ¾µ µ¥ÀÌÅÍ¸¦ copy_from_user ÇÔ¼ö¸¦ ÀÌ¿ëÇÏ¿© kernel buffer·Î ¿Å±ä´Ù.
+         // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ copy_from_user ï¿½Ô¼ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ kernel bufferï¿½ï¿½ ï¿½Å±ï¿½ï¿½.
          user_result = copy_from_user(dev->bulk_out_buffer, u_buf, bulk_size);
          
-         // ¹úÅ©¹æ½ÄÀ» ÀÌ¿ëÇÏ¿© µ¥ÀÌÅÍ¸¦ ¾´´Ù.
+         // ï¿½ï¿½Å©ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ì¿ï¿½ï¿½Ï¿ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½Í¸ï¿½ ï¿½ï¿½ï¿½ï¿½.
          bulk_ret = usb_bulk_msg (dev->udev,
                                  usb_sndbulkpipe(dev->udev, dev->bulk_out_endpointAddr),
                                  dev->bulk_out_buffer,
@@ -1021,7 +1030,7 @@ static ssize_t hfdu04_write(struct file *file, const char *buf, size_t count, lo
    }
    else if ( dev->bcdDevice < 0x2000)
    {
-     ret = 0; // HFDU01 Àº bulk write ¸¦ Áö¿øÇÏÁö ¾Ê´Â´Ù.
+     ret = 0; // HFDU01 ï¿½ï¿½ bulk write ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½Ê´Â´ï¿½.
    }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2,6,17)
@@ -1861,7 +1870,7 @@ static int hfdu04_probe(struct usb_interface *interface,
                }
                else // if (dev->bcdDevice >= 0x2000)
                {
-                  //dev->maxbulktransfersize = 384; // 384 = 64*6 (1ms ´ç 6¹øÀÇ transactionÀ» ½ÃµµÇÔ)
+                  //dev->maxbulktransfersize = 384; // 384 = 64*6 (1ms ï¿½ï¿½ 6ï¿½ï¿½ï¿½ï¿½ transactionï¿½ï¿½ ï¿½Ãµï¿½ï¿½ï¿½)
                   dev->maxbulktransfersize = 512;
                }
             }
