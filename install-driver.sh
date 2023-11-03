@@ -60,6 +60,12 @@ else
   echo "File VenusLib.so does not exist in the current directory"
 fi
 
+if [ -f ./VenusDrv.conf ]; then
+  cp ./VenusDrv.conf /etc/
+else
+  echo "File VenusDrv.conf does not exist in the current directory and was not copied"
+fi
+
 /sbin/insmod $DRIVER_PATH/VenusDrv.ko
 
 /sbin/depmod
