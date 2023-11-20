@@ -716,10 +716,10 @@ static ssize_t hfdu04_read(struct file *file, char *buf, size_t count, loff_t *p
         // goto err;
 
         remain_count = count;
-        bulk_read_size = 32 * PAGE_SIZE;
+        bulk_read_size = 16 * PAGE_SIZE;
 #else
         remain_count = count;
-        bulk_read_size = count; //(dev->maxbulktransfersize)/8;
+        bulk_read_size = count / 2; //(dev->maxbulktransfersize)/8;
 #endif
         if (dev->bulk_in_endpointAddr == dev->bulk_in_endpointAddr_fw)
             bulk_read_size = dev->maxbulktransfersize;
