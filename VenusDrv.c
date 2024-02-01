@@ -12,6 +12,7 @@
  * 14/02/2018 : supports for Ubuntu-17.10(Kernel v4.13.0) by jphwang
  * 06/08/2018 : supports for Ubuntu-18.04(Kernel v4.15.0) by jphwang
  * 22/10/2023 : support for linux kernel higher or equal than v.5.19 by Lucas Andreatta
+ * 01/02/2024 : support for linux kernel higher or equal than v.6.4 by Lucas Andreatta
  *
  */
 
@@ -133,8 +134,10 @@ static struct workqueue_struct *comm_queue;
 /* prevent races between  open() disconnect() read() */
 #if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
 static DECLARE_MUTEX(disconnect_sem);
-#else
+#elif LINUX_VERSION_CODE < KERNEL_VERSION(6, 4, 0)
 static DEFINE_SEMAPHORE(disconnect_sem);
+#else
+static DEFINE_SEMAPHORE(disconnect_sem, 1);
 #endif
 
 /* driver  structure ***************************************************************/
